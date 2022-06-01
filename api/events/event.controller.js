@@ -1,11 +1,10 @@
 require('dotenv').config();
 const Event = require('./event.model')
 
-Event
 async function getAllEvents(req, res) {
   const { status } = req.query;
   try {
-    const events = await Event.find();
+    const events = await Event.find().sort({createdAt: 'desc' });
     res.status(200).json( events );
   } catch (err) {
     console.error(err);
@@ -18,6 +17,19 @@ async function retrieveEvent(req, res) {
   try {
     const event = await Event.findById(id);
     res.status(200).json(event);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err });
+  }
+}
+
+
+async function retrieveEventByUser(req, res) {
+  const user = req.query.userId;
+  console.log(user);
+  try {
+    const events = await Event.find({attendees:user });
+    res.status(200).json(events);
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: err });
@@ -60,14 +72,28 @@ async function updateEvent(req, res) {
 async function addAttende(req, res) {
   const { id } = req.params
   const {userId} = req.query;
-  console.log(userId)
+
   try {
-    const eventUpdated = await Event.findByIdAndUpdate(id,  { $addToSet : { attendees: userId } }, { new: true })
-    res.status(200).json(eventUpdated)
-  } catch(err) {
+      const eventUpdated = await Event.findByIdAndUpdate(id,  { $addToSet : { attendees: userId } }, { new: true })
+      res.status(200).json(eventUpdated)
+    } catch(err) {
     res.status(400).json({ error: err})
   }
 }
+
+async function removeAttende(req, res) {
+  const { id } = req.params
+  const {userId} = req.query;
+
+  try {
+   
+      const eventUpdated = await Event.findByIdAndUpdate(id,  { $pull : { attendees: userId } }, { new: true })
+      res.status(200).json(eventUpdated)
+    } catch(err) {
+      res.status(400).json({ error: err})
+    }
+}
+
 
 async function deleteEvent(req, res) {
   const { id } = req.params;
@@ -86,4 +112,6 @@ module.exports = {
     updateEvent,
     deleteEvent,
     addAttende,
+    removeAttende,
+    retrieveEventByUser,
 };
